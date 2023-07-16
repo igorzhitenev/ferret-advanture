@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ferret Adventure</title>
+  <style>
+    canvas {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1700" height="900"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Load images
+    const ferretImg = new Image();
+    ferretImg.src = 'photo_2023-06-15_13-42-55.jpg';
+
+    const eggImg = new Image();
+    eggImg.src = 'free-egg-baby-dinosaur-egg-clip-art-free-clipart-images-728765.png';
+
+    // Ferret variables
+    const ferretWidth = 100;
+    const ferretHeight = 100;
+    let ferretX = 50;
+    let ferretY = canvas.height - ferretHeight;
+    let ferretJumping = false;
+    let ferretJumpHeight = 150;
+    let ferretJumpVelocity = 15;
+    let ferretMovingLeft = false;
+    let ferretMovingRight = false;
+    const ferretSpeed = 10;
+    
+
+    // Egg variables
+    const eggRadius = 20;
+    let eggs = [];
+    let score = 0;
+
+    // Event listeners for key presses
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    function handleKeyDown(event) {
+      if (event.code === 'Space' && !ferretJumping) {
+        ferretJumping = true;
+      } else if (event.code === 'ArrowLeft') {
+        ferretMovingLeft = true;
+      } else if (event.code === 'ArrowRight') {
+        ferretMovingRight = true;
+      }
+    }
+
+    function handleKeyUp(event) {
+      if (event.code === 'Space' && ferretJumping) {
+        ferretJumping = false;
+      } else if (event.code === 'ArrowLeft') {
+        ferretMovingLeft = false;
+      } else if (event.code === 'ArrowRight') {
+        ferretMovingRight = false;
+      }
+    }
+
+    function drawFerret() {
+      ctx.fillStyle = '#FF0000';
+      ctx.fillRect(ferretX, ferretY, ferretWidth, ferretHeight);
+    }
+
+    function drawEggs() {
+      ctx.fillStyle = '#FFFF00';
+      eggs.forEach(egg => {
+        ctx.beginPath();
+        ctx.arc(egg.x, egg.y, eggRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+      });
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawFerret();
+      drawEggs();
+
+      if (ferretJumping) {
+        if (ferretY > canvas.height - ferretHeight - ferretJumpHeight) {
+          ferretY -= ferretJumpVelocity;
+          ferretJumpVelocity -= 0.5;
+        } else {
+          ferretJumping = false;
+          ferretJumpVelocity = 10;
+        }
+      } else if (ferretY < canvas.height - ferretHeight) {
+        ferretY += ferretJumpVelocity;
+        ferretJumpVelocity += 0.5;
+      }
+
+      if (ferretMovingLeft && ferretX > 0) {
+        ferretX -= ferretSpeed;
+      }
+
+      if (ferretMovingRight && ferretX + ferretWidth < canvas.width) {
+        ferretX += ferretSpeed;
+      }
+
+      // Update egg positions
+      eggs.forEach(egg => {
+        egg.y += 2; // Fall speed
+
+        // Check collision with the ferret
+        if (
+          egg.y + eggRadius > ferretY &&
+          egg.x >= ferretX &&
+          egg.x <= ferretX + ferretWidth
+        ) {
+          score++;
+          eggs = eggs.filter(e => e !== egg);
+        }
+
+        // Remove eggs that have gone off-screen
+        if (egg.y - eggRadius > canvas.height) {
+          eggs = eggs.filter(e => e !== egg);
+        }
+      });
+
+      // Generate new eggs randomly
+      if (Math.random() < 0.007) {
+        const randomX = Math.random() * (canvas.width - eggRadius * 2) + eggRadius;
+        eggs.push({ x: randomX, y: 0 });
+      }
+
+      // Display the score
+      ctx.fillStyle = '#000';
+      ctx.font = '20px Arial';
+      ctx.fillText('Score: ' + score, 10, 30);
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>

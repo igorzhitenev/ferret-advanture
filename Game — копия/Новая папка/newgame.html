@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Side-Scrolling Game</title>
+    <style>
+      canvas {
+        border: 1px solid black;
+        display: block;
+        margin: 0 auto;
+        background-image: url("1674727798_top-fon-com-p-fon-dlya-prezentatsii-lesnaya-opushka-9.png");
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="2000" height="970"></canvas>
+
+    <script>
+      // Create the canvas and context
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Character and egg images
+      const ferretImg = new Image();
+      ferretImg.src = "photo_2023-06-15_13-42-55 (2).png";
+
+      const eggImg = new Image();
+      eggImg.src = "pngtree-delicious-chicken-leg-cartoon-illustration-png-image_4704952 (3).png";
+
+      const egg2Img = new Image();
+      egg2Img.src = "egg.png";
+
+      // Game variables
+      let score = 0;
+      let eggs = [];
+      const maxEggs = 10;
+
+      // Ferret object
+      const ferret = {
+        x: 50,
+        y: 0,
+        width: 170,
+        height: 170,
+        speed: 6,
+        isJumping: false,
+        jumpHeight: 100,
+        jumpCount: 0,
+      };
+
+      // Egg objects
+      function Egg(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 100;
+        this.height = 80;
+      }
+
+      function Egg2(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 100;
+        this.height = 80;
+      }
+
+      // Generate random eggs falling from above
+      function generateEggs() {
+        while (eggs.length < maxEggs) {
+          const eggX = Math.random() * canvas.width;
+          const eggY = Math.random() * -canvas.height;
+          if (Math.random() < 0.5) {
+            eggs.push(new Egg(eggX, eggY));
+          } else {
+            eggs.push(new Egg2(eggX, eggY));
+          }
+        }
+      }
+
+      // Handle keyboard input
+      const keys = {};
+      document.addEventListener("keydown", (e) => {
+        keys[e.code] = true;
+      });
+      document.addEventListener("keyup", (e) => {
+        keys[e.code] = false;
+      });
+
+      // Game loop
+      function gameLoop() {
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update the ferret's position
+        if (keys["ArrowLeft"] && ferret.x > 0) {
+          ferret.x -= ferret.speed;
+        }
+        if (keys["ArrowRight"] && ferret.x + ferret.width < canvas.width) {
+          ferret.x += ferret.speed;
+        }
+        if (keys["Space"] && !ferret.isJumping) {
+          ferret.isJumping = true;
+          ferret.jumpCount = 2;
+        }
+
+        // Jumping motion
+        if (ferret.isJumping) {
+          if (ferret.jumpCount < ferret.jumpHeight) {
+            ferret.y -= 5;
+            ferret.jumpCount += 5;
+          } else {
+            ferret.isJumping = false;
+          }
+        } else if (ferret.y < canvas.height - ferret.height) {
+          ferret.y += 5;
+        }
+
+        // Draw the eggs
+        eggs.forEach((egg, index) => {
+          if (egg instanceof Egg) {
+            ctx.drawImage(eggImg, egg.x, egg.y, egg.width, egg.height);
+          } else if (egg instanceof Egg2) {
+            ctx.drawImage(egg2Img, egg.x, egg.y, egg.width, egg.height);
+          }
+
+          // Check for collision with the ferret
+          if (
+            ferret.x < egg.x + egg.width &&
+            ferret.x + ferret.width > egg.x &&
+            ferret.y < egg.y + egg.height &&
+            ferret.y + ferret.height > egg.y
+          ) {
+            eggs.splice(index, 1); // Remove collected egg
+            score++; // Increase score
+          }
+
+          // Update egg position
+          egg.y += 3; // Adjust the falling speed
+
+          // Respawn the egg if it goes off the screen
+          if (egg.y > canvas.height) {
+            eggs.splice(index, 1); // Remove the egg
+            generateEggs(); // Generate a new egg
+          }
+        });
+
+        // Draw the ferret
+        ctx.drawImage(ferretImg, ferret.x, ferret.y, ferret.width, ferret.height);
+
+        // Check if the ferret falls on the floor
+        if (ferret.y > canvas.height) {
+          gameOver();
+        }
+
+        // Draw the score
+        ctx.fillStyle = "black";
+        ctx.font = "20px Arial";
+        ctx.fillText("Score: " + score, 10, 30);
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Game over function
+      function gameOver() {
+        alert("Game Over! Score: " + score);
+        score = 0;
+        eggs = [];
+        ferret.x = 50;
+        ferret.y = 0;
+        generateEggs();
+      }
+
+      // Generate initial eggs
+      generateEggs();
+
+      // Start the game loop
+      gameLoop();
+    </script>
+  </body>
+</html>
